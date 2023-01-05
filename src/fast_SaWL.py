@@ -9,11 +9,6 @@ import pickle
 import numpy as np
 import copy
 import pdb
-from ogb.graphproppred import PygGraphPropPredDataset
-from torch_geometric.data import Data
-import sys
-# print(sys.path)
-sys.path.append("/home/wangzhaohui/git_repos/Subgraph-aware-WL")
 from data_util.pre_algorithms import preprocess_graphs
 
 
@@ -30,44 +25,38 @@ class Fast_SaWL(object):
         input: preprocessed graphs; output: feature mappings of graphs 
         
         """
-        dset_phi_all_dims_iters = []
+        dset_psi_all_dims_iters = []
         dset_subgraph_nodes_iters = []
 
         dset_raw_node_neighbors, dset_subgraph_nodes, dset_id_labels, dset_max_labels = pre_data[0], pre_data[1], pre_data[2], pre_data[3]        
         dset_subgraph_nodes_iters.append(dset_subgraph_nodes)
         
         for l_dim in range(len(dset_id_labels)):     #each label dimension; 
-            dset_phi_all_iters = []
+            dset_psi_all_iters = []
             
             for iter in range(self.iters):      #each iter  
                 print(f'iter_{iter}')                 
-                dset_id_multiset_iter, multi_list_iter, dset_subgraph_update = self.multiset_determinate(dset_raw_node_neighbors, dset_id_labels[l_dim], dset_subgraph_nodes_iters[iter])   
+                dset_id_multiset_iter, multi_list_iter, dset_subgraph_update = self.multiset_determinate(dset_raw_node_neighbors, 
+                                                                                                         dset_id_labels[l_dim], dset_subgraph_nodes_iters[iter])   
                 dset_subgraph_nodes_iters.append(dset_subgraph_update)
                 
-                dset_id_label_iter_updated, dset_max_labels_updated = self.relabels(multi_list_iter, dset_id_labels[l_dim], dset_max_labels[l_dim], dset_id_multiset_iter)
+                dset_id_label_iter_updated, dset_max_labels_updated = self.relabels(multi_list_iter, dset_id_labels[l_dim],
+                                                                                    dset_max_labels[l_dim], dset_id_multiset_iter)
 
-                dset_graphs_phi_iter = self.counting_psi(dset_id_label_iter_updated, dset_max_labels_updated, dset_subgraph_nodes_iters)
-                # print(f'{iter}=th iter phi:', dset_graphs_phi_iter)
+                dset_graphs_psi_iter = self.counting_psi(dset_id_label_iter_updated, dset_max_labels_updated,
+                                                         dset_subgraph_nodes_iters)
+            
                 dset_max_labels[l_dim] = dset_max_labels_updated
                 dset_id_labels[l_dim] = dset_id_label_iter_updated
-                dset_phi_all_iters.append(dset_graphs_phi_iter)
+                dset_psi_all_iters.append(dset_graphs_psi_iter)
             # pdb.set_trace()    
-            dset_phi_all_iters = torch.cat(dset_phi_all_iters, -1)
-            dset_phi_all_dims_iters.append(dset_phi_all_iters)
-            print(f'max label in {l_dim}-th dimension is: {dset_max_labels[l_dim]}')
+            dset_psi_all_iters = torch.cat(dset_psi_all_iters, -1)
+            dset_psi_all_dims_iters.append(dset_psi_all_iters)
         
-        dset_phi_all_dims_iters = torch.cat(dset_phi_all_dims_iters, -1)
+        dset_psi_all_dims_iters = torch.cat(dset_psi_all_dims_iters, -1)
         dset_max_labels = torch.tensor(dset_max_labels)
-        print('final shape of phi is: ', dset_phi_all_dims_iters.shape)
         
-        return dset_phi_all_dims_iters, dset_max_labels
-        # dataset.phi_list = dset_phi_all_dims_iters
-        # dataset.max_labels = dset_max_labels
-        
-        # else:
-        #     dataset.phi_list = saved_phi_list
-        #     dataset.max_labels = saved_max_labels
-    
+        return dset_psi_all_dims_iters, dset_max_labels
     
     
     def multiset_determinate(self, dset_graph_node_neighs, dset_graph_id_labels, dset_subgraph_nodes):

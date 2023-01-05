@@ -4,11 +4,9 @@ Official code for [Towards Efficient and Expressive GNNs for Graph Classificatio
 
 ## Motivation
 ![](figures/motivation.png)
-<center>Figure 1.</center>
 
 ## Illustration of fast SaWL
 ![](figures/fast%20SaWL.png)
-<center>Figure 2.</center>
 
 ## Requirements
 > python=3.8  
